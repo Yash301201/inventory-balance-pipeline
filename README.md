@@ -1,86 +1,125 @@
 # Inventory Balance Pipeline
 
-A small, local data engineering project that turns inventory receipts, issues, transfers, and adjustments into daily stock balances.
+A local Python pipeline that validates inventory movements, rebuilds daily stock balances, preserves correction history, and publishes traceable reconciliation reports.
 
-## Requirements
+## Requirements and quick start
 
 - Python 3.10 or newer
-- No third-party Python packages
+- Python standard library only; no database or external service is required
 
-## Run it
+From the project folder, run:
 
-Open a terminal in this project folder and run:
-
-```powershell
+```sh
 python src/main.py
-```
-
-The sample run reads `data/input/transactions.csv` and the product/location reference files. It writes these files to `data/output/`:
-
-- `daily_balances.csv` — one row per date, product, and location
-- `rejected_records.csv` — invalid input rows with a reason
-- `run_summary.json` — run ID, status, counts, timing, and reconciliation result
-
-The sample intentionally contains a duplicate event, an unknown product, and a missing required value. Those rows should appear in `rejected_records.csv`.
-
-## Architecture
-
-The pipeline runs locally and uses CSV files for inputs and outputs:
-
-```mermaid
-flowchart TD
-    G["generate_sample.py"] -. creates larger sample .-> T["transactions.csv"]
-    T --> M["main.py: orchestrates the run"]
-    P["products.csv"] --> V["validate.py: schema and business rules"]
-    L["locations.csv"] --> V
-    M --> V
-    V -->|valid events| X["transform.py: daily movements and balances"]
-    V -->|invalid events| R["rejected_records.csv"]
-    X --> B["daily_balances.csv"]
-    X --> C["Reconcile movement totals"]
-    B --> C
-    C --> S["run_summary.json"]
-    U["test_pipeline.py"] -. checks .-> V
-    U -. checks .-> X
-```
-
-Use different files or an output folder with command-line options:
-
-```powershell
-python src/main.py --input data/input/transactions.csv --output-dir data/output
-```
-
-Generate a larger reproducible dataset (100,000 rows by default):
-
-```powershell
-python src/generate_sample.py --rows 100000 --seed 42 --output data/input/large_transactions.csv
-python src/main.py --input data/input/large_transactions.csv --output-dir data/output/large_run
-```
-
-Run automated checks:
-
-```powershell
 python -m unittest discover -s tests -v
 ```
 
-## Business rules and assumptions
+The sample contains 9 transaction rows: 6 accepted event versions and 3 rejected rows. The expected daily output has 12 rows. The sample's ending company stock is 12 and its reconciliation difference is 0.
 
-- Each nonblank `event_id` is claimed by its first row. Later rows with that ID are rejected. If the first row is invalid, it is rejected too and later repeats remain duplicates.
-- Receipt and issue quantities are positive whole numbers. Receipts add stock; issues subtract stock.
-- Adjustment quantities are signed whole numbers: positive adds stock, negative removes stock.
-- A transfer has a positive quantity and moves stock from one known location to a different known location.
-- A transaction refers to a product and location present in the reference CSV files.
-- There is no opening stock in this starter project. Balances begin at zero, then transactions change them.
-- The pipeline recomputes the full history from the input file on every run. This makes reruns safe and includes late or backdated events in the recalculated balances.
-- Negative balances are allowed and shown; the brief does not define whether they should be rejected.
-- A malformed or changed transaction header fails the run clearly instead of silently interpreting columns incorrectly.
+## Outputs
 
-## Design and performance
+Every run is written into its own directory under `data/output/runs/<run_id>/`. The pipeline writes `data/output/latest_success.json` only after the full output set has been prepared. Consumers should follow this pointer and read all artifacts from the referenced run directory.
 
-The pipeline validates once, sorts accepted events by date and ID, aggregates their daily movements, then calculates running balances. Sorting is `O(n log n)` and the balance calculation is linear in the number of daily product-location rows. For much larger volumes, a database engine and incremental backfill strategy would be reasonable next steps.
+A successful run contains:
 
-Each run records elapsed milliseconds in `run_summary.json`. To measure the larger case, run the 100,000-row commands above and read the `elapsed_ms` value from the resulting summary. The measurement is machine-dependent.
+- `daily_balances.csv` — one row per date, product, and location
+- `accepted_events.csv` — normalized event versions, including active/superseded status and source lineage
+- `rejected_records.csv` — quarantined source records, reasons, source hash, and record/line positions
+- `run_summary.json` — counts, quality status, timing, environment, and reconciliation checks
+- `run_manifest.json` — input hashes, archived source locations, output hashes, and run counts
+- `input_snapshot/` — exact transaction and reference CSV bytes used by the run
 
-Example measurement from this project run: 100,000 events were accepted, 1,460 daily balance rows were produced, reconciliation difference was zero, and processing took about 791 ms in the current environment. See `data/output/large_run/run_summary.json` for the recorded run details.
+A failed run is kept under `data/output/runs/failed-<run_id>/` when the output folder is writable. It is never selected by `latest_success.json`; the previous successful run remains current. `success_with_rejects` is still a successful pipeline run: rejected rows are recorded, the exit code is zero, and the summary reports the reject rate.
 
-See [`docs/data_dictionary.md`](docs/data_dictionary.md) for the input/output fields and [`docs/design.md`](docs/design.md) for flow, operational behavior, and trade-offs.
+To locate the latest run using Python:
+
+```sh
+python -c "import json; from pathlib import Path; p=json.loads(Path('data/output/latest_success.json').read_text()); print(Path('data/output') / Path(p['manifest']).parent)"
+```
+
+## Architecture
+
+```mermaid
+flowchart TD
+    I["Transactions + product/location master CSVs"] --> S["Archive exact input bytes and calculate SHA-256"]
+    S --> V["Strict CSV parsing and business validation"]
+    V -->|valid versions| C["Resolve immutable supersession chains"]
+    V -->|invalid rows| R["Quarantined reject records"]
+    C -->|active versions| T["Aggregate movements and rebuild daily balances"]
+    C -->|all accepted versions| A["Accepted event lineage"]
+    T --> Q["Reconcile by date, product, location, category and totals"]
+    Q -->|all checks pass| O["Write private run directory and manifest"]
+    R --> O
+    A --> O
+    O --> P["Atomically replace latest_success.json"]
+    O -. failure .-> F["Keep isolated failed run; leave previous pointer unchanged"]
+    G["generate_sample.py"] -. creates .-> I
+    U["unittest suite"] -. verifies .-> V
+    U -. verifies .-> T
+    U -. verifies .-> O
+```
+
+The source modules have one responsibility each:
+
+- `src/main.py` coordinates a run, records stage metrics, and returns a nonzero exit code on failure.
+- `src/validate.py` checks CSV structure, reference keys, movement rules, and event correction links.
+- `src/transform.py` aggregates active event versions, creates dense daily balances, and performs independent reconciliation.
+- `src/publish.py` archives source bytes, hashes artifacts, and atomically updates the latest-success pointer.
+- `src/generate_sample.py` creates reproducible clean data and a separately labeled anomaly/correction fixture.
+
+## Input contract and corrections
+
+`--input` must contain the **complete historical event snapshot** every time. A file containing only new daily transactions is not an incremental batch: the pipeline rebuilds balances from the rows in the file it receives. Keep the old events and append new events or correction versions before rerunning.
+
+An event's `event_id` is immutable and unique. When reusing the same `--output-dir`, the pipeline checks that previously accepted IDs are still present with unchanged values; this catches accidental history replacement. To correct an existing event, retain its original row and add a new row with a new ID, `supersedes_event_id` set to the old ID, and a timezone-aware `recorded_at`. Only the latest valid version in a correction chain affects stock. Earlier versions remain in `accepted_events.csv` as `superseded` and in each run's archived input. Reprocessing the same complete snapshot does not apply the correction twice. A correction to a transfer replaces both location effects together.
+
+Each `supersedes_event_id` must point to one accepted version in the same complete snapshot. Missing links, correction cycles, and multiple corrections branching from the same version are rejected. If an earlier version has `recorded_at`, its correction must be recorded later.
+
+The first nonblank row for an `event_id` reserves that ID even when invalid. An identical repeated payload is rejected as `identical_redelivery`; a different repeated payload is rejected as `conflicting_event_id`. Use a new event ID and a supersession link for a correction.
+
+### Movement rules
+
+- Receipts add stock; issue quantities subtract stock.
+- Transfers move positive integer quantities between two different known locations.
+- Adjustments are signed nonzero integer quantities.
+- Each event references a known product and the applicable location field(s).
+- Balances start at zero. Negative stock is allowed and shown because the assignment does not define a negative-stock rejection rule.
+- The output includes every calendar date between the first and last active movement, carrying balances over no-movement days. The maximum span is 3,660 calendar days, and a run is capped at 250,000 daily rows.
+
+### CSV structure and failures
+
+All files are UTF-8 CSV with a header. Transaction and reference headers must match the data dictionary exactly; duplicate column names fail the batch. A header-only transaction file is valid and has zero records. A zero-byte file fails because it has no schema. Short and extra-width transaction records are quarantined with their available raw values; malformed quoting fails the batch because the record boundaries cannot be trusted.
+
+## Run options and synthetic data
+
+Relative paths are resolved from the project folder for both commands.
+
+```sh
+python src/main.py --input data/input/transactions.csv --products data/input/products.csv --locations data/input/locations.csv --output-dir data/output
+python src/generate_sample.py --rows 100000 --seed 42 --output data/input/large_transactions.csv
+python src/main.py --input data/input/large_transactions.csv --output-dir work/large-output
+```
+
+The clean baseline generator uses the product and location IDs from the reference files. For a small fixture containing late corrections, duplicates, invalid references, missing values, invalid quantities, and invalid dates, run:
+
+```sh
+python src/generate_sample.py --rows 1000 --seed 42 --output work/clean.csv --scenario-output data/ground_truth/scenario_transactions.csv
+```
+
+The fixture's labels and manifest are written beside the scenario CSV. Labels are not pipeline input columns. See [`docs/ground_truth_format.md`](docs/ground_truth_format.md) for how to compare them.
+
+## Tests and performance
+
+Run the full validation suite:
+
+```sh
+python -m unittest discover -s tests -v
+```
+
+The tests use small hand-calculated examples and cover source validation, movement rules, corrections, transfer effects, granular reconciliation, recovery, output publication, and generator behavior.
+
+The algorithm sorts event versions and then emits a dense date/product/location grid. Sorting is `O(n log n)`; output work is proportional to the number of products × locations × calendar days represented. Inputs and outputs are held in memory, so very large histories may need a database or streaming design.
+
+Performance figures are environment-specific. The current Windows 11 / Python 3.13.15 run processed 100,000 events in 9,020.83 ms and produced 1,460 daily rows. An earlier project run recorded about 791 ms with incomplete environment metadata; the independent review measured 723.65 ms with Python 3.12.14 on Linux. These different observations are not directly comparable. Run the command above on your machine and use that run's `elapsed_ms`, `python_version`, and `platform` fields. Data generation time is not included in pipeline elapsed time.
+
+See [`docs/data_dictionary.md`](docs/data_dictionary.md), [`docs/design.md`](docs/design.md), and [`docs/validation_report.md`](docs/validation_report.md) for the full field contract, design choices, and recorded verification results.
