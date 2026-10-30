@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+.venv/
+data/input/large_transactions.csv
+work/
