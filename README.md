@@ -23,6 +23,27 @@ The sample run reads `data/input/transactions.csv` and the product/location refe
 
 The sample intentionally contains a duplicate event, an unknown product, and a missing required value. Those rows should appear in `rejected_records.csv`.
 
+## Architecture
+
+The pipeline runs locally and uses CSV files for inputs and outputs:
+
+```mermaid
+flowchart TD
+    G["generate_sample.py"] -. creates larger sample .-> T["transactions.csv"]
+    T --> M["main.py: orchestrates the run"]
+    P["products.csv"] --> V["validate.py: schema and business rules"]
+    L["locations.csv"] --> V
+    M --> V
+    V -->|valid events| X["transform.py: daily movements and balances"]
+    V -->|invalid events| R["rejected_records.csv"]
+    X --> B["daily_balances.csv"]
+    X --> C["Reconcile movement totals"]
+    B --> C
+    C --> S["run_summary.json"]
+    U["test_pipeline.py"] -. checks .-> V
+    U -. checks .-> X
+```
+
 Use different files or an output folder with command-line options:
 
 ```powershell
