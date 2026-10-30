@@ -1,0 +1,10 @@
+event_id,event_date,product_id,event_type,quantity,location_id,from_location,to_location
+EVT-001,2026-01-01,SKU-001,receipt,10,WH-A,,
+EVT-002,2026-01-01,SKU-001,issue,2,WH-A,,
+EVT-003,2026-01-02,SKU-001,transfer,3,,WH-A,WH-B
+EVT-004,2026-01-02,SKU-001,adjustment,-1,WH-B,,
+EVT-005,2026-01-03,SKU-002,receipt,6,WH-A,,
+EVT-006,2026-01-04,SKU-001,issue,1,WH-B,,
+EVT-006,2026-01-04,SKU-001,issue,1,WH-B,,
+EVT-008,2026-01-04,SKU-999,receipt,4,WH-A,,
+EVT-009,2026-01-04,SKU-002,receipt,3,,, 

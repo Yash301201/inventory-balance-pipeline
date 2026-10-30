@@ -1,0 +1,23 @@
+{
+  "run_id": "2fe3f942-412a-4afb-90ea-a2032db3828a",
+  "source_file": "transactions.csv",
+  "started_at": "2026-10-30T03:10:19.719203+00:00",
+  "finished_at": "2026-10-30T03:10:19.727164+00:00",
+  "status": "success",
+  "input_rows": 9,
+  "accepted_rows": 6,
+  "rejected_rows": 3,
+  "daily_balance_rows": 12,
+  "reconciliation": {
+    "receipts": 16,
+    "issues": 3,
+    "transfer_events": 1,
+    "adjustments": -1,
+    "expected_ending_stock": 12,
+    "actual_ending_stock": 12,
+    "difference": 0,
+    "passed": true
+  },
+  "elapsed_ms": 7.97,
+  "error": null
+}
