@@ -1,4 +1,0 @@
-run_id,source_file,source_row,reason,raw_event
-2fe3f942-412a-4afb-90ea-a2032db3828a,transactions.csv,8,duplicate event_id: EVT-006,"{""event_date"": ""2026-01-04"", ""event_id"": ""EVT-006"", ""event_type"": ""issue"", ""from_location"": """", ""location_id"": ""WH-B"", ""product_id"": ""SKU-001"", ""quantity"": ""1"", ""to_location"": """"}"
-2fe3f942-412a-4afb-90ea-a2032db3828a,transactions.csv,9,unknown product_id: SKU-999,"{""event_date"": ""2026-01-04"", ""event_id"": ""EVT-008"", ""event_type"": ""receipt"", ""from_location"": """", ""location_id"": ""WH-A"", ""product_id"": ""SKU-999"", ""quantity"": ""4"", ""to_location"": """"}"
-2fe3f942-412a-4afb-90ea-a2032db3828a,transactions.csv,10,receipt requires location_id,"{""event_date"": ""2026-01-04"", ""event_id"": ""EVT-009"", ""event_type"": ""receipt"", ""from_location"": """", ""location_id"": """", ""product_id"": ""SKU-002"", ""quantity"": ""3"", ""to_location"": "" ""}"

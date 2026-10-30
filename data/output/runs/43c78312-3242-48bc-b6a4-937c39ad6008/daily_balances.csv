@@ -1,0 +1,13 @@
+run_id,source_file,source_sha256,balance_date,product_id,location_id,opening_quantity,receipts,issues,transfers_in,transfers_out,adjustments,net_change,closing_quantity,movement_count
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-01,SKU-001,WH-A,0,10,2,0,0,0,8,8,2
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-02,SKU-001,WH-A,8,0,0,0,3,0,-3,5,1
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-03,SKU-001,WH-A,5,0,0,0,0,0,0,5,0
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-04,SKU-001,WH-A,5,0,0,0,0,0,0,5,0
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-01,SKU-001,WH-B,0,0,0,0,0,0,0,0,0
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-02,SKU-001,WH-B,0,0,0,3,0,-1,2,2,2
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-03,SKU-001,WH-B,2,0,0,0,0,0,0,2,0
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-04,SKU-001,WH-B,2,0,1,0,0,0,-1,1,1
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-01,SKU-002,WH-A,0,0,0,0,0,0,0,0,0
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-02,SKU-002,WH-A,0,0,0,0,0,0,0,0,0
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-03,SKU-002,WH-A,0,6,0,0,0,0,6,6,1
+43c78312-3242-48bc-b6a4-937c39ad6008,data/input/transactions.csv,6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85,2026-01-04,SKU-002,WH-A,6,0,0,0,0,0,0,6,0

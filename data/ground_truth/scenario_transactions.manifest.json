@@ -1,0 +1,37 @@
+{
+  "correction_acceptance_example": {
+    "corrected_receipt": 8,
+    "correction_reprocessed_twice": "one active receipt version",
+    "expected_closing_after_jan_1": 8,
+    "expected_closing_after_jan_2": 5,
+    "issue": 3,
+    "original_receipt": 10
+  },
+  "expected_balances_file": "scenario_transactions.expected_balances.csv",
+  "expected_balances_sha256": "66fd0e2c06e2bf8ea8509705f9443b9e11493c04e05d45dcca9bd1d832f03bad",
+  "expected_dispositions": {
+    "accepted_active": 4,
+    "accepted_superseded": 1,
+    "rejected": 6
+  },
+  "fixture": "scenario_transactions.csv",
+  "labels_are_not_pipeline_input": true,
+  "labels_file": "scenario_transactions.labels.csv",
+  "labels_sha256": "1a93a39229a47f41323cecd89be9794578c0bfe99d8f0b16cb8c02ce324ddd3d",
+  "rows": 11,
+  "scenario_counts": {
+    "audited_correction": 1,
+    "conflicting_event_id": 1,
+    "correction_chain": 1,
+    "identical_redelivery": 1,
+    "invalid_date": 1,
+    "invalid_quantity": 1,
+    "late_history": 1,
+    "missing_value": 1,
+    "quantity_boundary": 2,
+    "unknown_product": 1
+  },
+  "seed": "fixed-scenario-v1",
+  "sha256": "d51e5561fe582f69020517d8fe1bf6b5bd59d333455040c3808a85d3c3b0247e",
+  "version": 1
+}

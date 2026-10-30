@@ -1,0 +1,7 @@
+balance_date,product_id,location_id,closing_quantity
+2026-01-01,SKU-001,WH-A,8
+2026-01-02,SKU-001,WH-A,5
+2026-01-03,SKU-001,WH-A,5
+2026-01-04,SKU-001,WH-A,6
+2026-01-05,SKU-001,WH-A,6
+2026-01-06,SKU-001,WH-A,5

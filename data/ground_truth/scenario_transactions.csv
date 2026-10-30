@@ -1,0 +1,12 @@
+event_id,event_date,product_id,event_type,quantity,location_id,from_location,to_location,recorded_at,supersedes_event_id
+SC-RECEIPT-V1,2026-01-01,SKU-001,receipt,10,WH-A,,,,
+SC-ISSUE-1,2026-01-02,SKU-001,issue,3,WH-A,,,,
+SC-RECEIPT-V2,2026-01-01,SKU-001,receipt,8,WH-A,,,2026-01-03T10:00:00Z,SC-RECEIPT-V1
+SC-ISSUE-1,2026-01-02,SKU-001,issue,3,WH-A,,,,
+SC-ISSUE-1,2026-01-02,SKU-001,issue,4,WH-A,,,,
+SC-UNKNOWN,2026-01-01,__UNKNOWN_PRODUCT__,receipt,1,WH-A,,,,
+SC-MISSING-LOCATION,2026-01-01,SKU-001,receipt,1,,,,,
+SC-BAD-QUANTITY,2026-01-01,SKU-001,receipt,1.5,WH-A,,,,
+SC-BAD-DATE,not-a-date,SKU-001,receipt,1,WH-A,,,,
+SC-ADJUST-UP,2026-01-04,SKU-001,adjustment,1,WH-A,,,,
+SC-ADJUST-DOWN,2026-01-06,SKU-001,adjustment,-1,WH-A,,,,

@@ -1,0 +1,11 @@
+{
+  "manifest": "runs/43c78312-3242-48bc-b6a4-937c39ad6008/run_manifest.json",
+  "published_at": "2026-10-30T16:16:40.518587+00:00",
+  "published_row_counts": {
+    "accepted_events": 6,
+    "daily_balances": 12,
+    "rejected_records": 3
+  },
+  "run_id": "43c78312-3242-48bc-b6a4-937c39ad6008",
+  "version": 1
+}

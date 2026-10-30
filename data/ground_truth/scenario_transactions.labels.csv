@@ -1,0 +1,12 @@
+source_record,scenario_id,expected_disposition,expected_reason_code
+1,correction_chain,accepted_superseded,
+2,late_history,accepted_active,
+3,audited_correction,accepted_active,
+4,identical_redelivery,rejected,identical_redelivery
+5,conflicting_event_id,rejected,conflicting_event_id
+6,unknown_product,rejected,unknown_product
+7,missing_value,rejected,missing_location
+8,invalid_quantity,rejected,invalid_quantity
+9,invalid_date,rejected,invalid_event_date
+10,quantity_boundary,accepted_active,
+11,quantity_boundary,accepted_active,

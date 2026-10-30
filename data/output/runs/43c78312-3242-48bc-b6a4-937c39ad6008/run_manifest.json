@@ -1,0 +1,69 @@
+{
+  "artifacts": {
+    "accepted_events.csv": {
+      "sha256": "e0e3dca12c2470af87b3b5669994cd0267fac14affb393dfc43f8bd58c8d45f1",
+      "size_bytes": 1350
+    },
+    "daily_balances.csv": {
+      "sha256": "44c7e365d3000234d8a42f0a3b5bc6cb44d9d32a99f45555e4cbb80aa75837f3",
+      "size_bytes": 2265
+    },
+    "input_snapshot/locations.csv": {
+      "sha256": "545a3f25dfe86e83233810c5f63f7ed6d324447b0e663af79d37daf4bc6374eb",
+      "size_bytes": 60
+    },
+    "input_snapshot/products.csv": {
+      "sha256": "c944092447d84e81693a4e20562018545a60ff89f7175534261452755708d272",
+      "size_bytes": 54
+    },
+    "input_snapshot/transactions.csv": {
+      "sha256": "6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85",
+      "size_bytes": 545
+    },
+    "rejected_records.csv": {
+      "sha256": "4c0688df8d87fd3bf727b6499a3ab998c275eb66e21fa768d0c2e0c3a906c767",
+      "size_bytes": 1499
+    },
+    "run_summary.json": {
+      "sha256": "cedd0b6f45b094b70262afa0a76df6d7784e8cef108e1b444007e85e34571a9e",
+      "size_bytes": 2109
+    }
+  },
+  "count_reconciliation_passed": true,
+  "counts": {
+    "accepted_event_versions": 6,
+    "active_events": 6,
+    "daily_balance_rows": 12,
+    "input_rows": 9,
+    "rejected_rows": 3,
+    "superseded_event_versions": 0
+  },
+  "created_at": "2026-10-30T16:16:40.388954+00:00",
+  "input_mode": "complete_historical_snapshot",
+  "publication_status": "prepared",
+  "reconciliation_passed": true,
+  "run_id": "43c78312-3242-48bc-b6a4-937c39ad6008",
+  "run_status": "success_with_rejects",
+  "source_files": {
+    "locations": {
+      "logical_path": "data/input/locations.csv",
+      "sha256": "545a3f25dfe86e83233810c5f63f7ed6d324447b0e663af79d37daf4bc6374eb",
+      "size_bytes": 60,
+      "snapshot_path": "input_snapshot/locations.csv"
+    },
+    "products": {
+      "logical_path": "data/input/products.csv",
+      "sha256": "c944092447d84e81693a4e20562018545a60ff89f7175534261452755708d272",
+      "size_bytes": 54,
+      "snapshot_path": "input_snapshot/products.csv"
+    },
+    "transactions": {
+      "logical_path": "data/input/transactions.csv",
+      "record_count": 9,
+      "sha256": "6272aa0db1d4b321e27de7af83b1aa7097d509b7d2dd19eda7d46f373eed8a85",
+      "size_bytes": 545,
+      "snapshot_path": "input_snapshot/transactions.csv"
+    }
+  },
+  "version": 1
+}
