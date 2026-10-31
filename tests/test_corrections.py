@@ -58,6 +58,29 @@ class CorrectionTests(unittest.TestCase):
             balances = list(csv.DictReader(handle))
         return pointer, run_dir, balances
 
+    def test_fractional_second_and_offset_corrections(self):
+        cases = [
+            ("2026-01-01T00:00:00Z", "2026-01-01T00:00:00.100000Z", True),
+            ("2026-01-01T00:00:00.900000Z", "2026-01-01T00:00:00Z", False),
+            ("2026-01-01T00:00:00Z", "2026-01-01T05:30:00+05:30", False),
+        ]
+        for parent, child, accepted in cases:
+            with self.subTest(parent=parent, child=child):
+                self.write_events([
+                    self.event("E1", "2026-01-01", "receipt", 10, recorded_at=parent),
+                    self.event("E2", "2026-01-01", "receipt", 8, recorded_at=child, supersedes_event_id="E1"),
+                ])
+                events, rejects, _ = read_and_validate(self.input, self.products, self.locations)
+                self.assertEqual(len(rejects), 0 if accepted else 1)
+                active = [e for e in events if e["version_status"] == "active"]
+                self.assertEqual(active[0]["quantity"], 8 if accepted else 10)
+                if accepted:
+                    self.assertEqual(run_pipeline(self.input, self.products, self.locations, self.output), 0)
+                    first = self.read_run_rows()[2]
+                    self.assertEqual(run_pipeline(self.input, self.products, self.locations, self.output), 0)
+                    second = self.read_run_rows()[2]
+                    self.assertEqual([r["closing_quantity"] for r in first], [r["closing_quantity"] for r in second])
+
     def test_audited_correction_preserves_original_run_and_reprocessing_is_idempotent(self):
         original_history = [
             self.event("E-RECEIPT-V1", "2026-01-01", "receipt", 10),

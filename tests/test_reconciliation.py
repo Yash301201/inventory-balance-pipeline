@@ -56,6 +56,18 @@ class ReconciliationTests(unittest.TestCase):
             rejected_rows=len(rejected),
         )
 
+    def test_strict_numeric_values(self):
+        from decimal import Decimal
+        events, balances, _ = self.compute([self.event("E1", "2026-01-01", "receipt", 10)])
+        for field in ("receipts", "opening_quantity", "closing_quantity", "net_change", "movement_count", "transfers_in", "transfers_out"):
+            for value in (0.5, 10.5, float("nan"), float("inf"), True, False, "10.0", "bad", " 10", Decimal("0.5"), Decimal("NaN")):
+                with self.subTest(field=field, value=value):
+                    changed = [row.copy() for row in balances]
+                    changed[0][field] = value
+                    self.assertFalse(reconcile(events, changed)["passed"])
+        strings = [{k: str(v) for k, v in row.items()} for row in balances]
+        self.assertTrue(reconcile(events, strings)["passed"])
+
     def test_shifted_movement_category_and_missing_date_fail(self):
         events, balances, good = self.compute([
             self.event("E1", "2026-01-01", "receipt", 10),

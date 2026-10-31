@@ -110,3 +110,29 @@ def publish_latest_success(
     }
     _atomic_json(output_dir / "latest_success.json", pointer)
     return pointer
+
+
+class OutputLock:
+    """Fail-fast single writer; exclusive creation is atomic on local filesystems."""
+    def __init__(self, output_dir):
+        self.path = Path(output_dir) / ".writer.lock"
+        self.owned = False
+
+    def acquire(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            descriptor = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            raise RuntimeError(f"output directory is locked by another writer: {self.path}") from None
+        self.owned = True
+        try:
+            with os.fdopen(descriptor, "w") as handle:
+                handle.write(f"pid={os.getpid()}\n")
+        except BaseException:
+            self.release()
+            raise
+
+    def release(self):
+        if self.owned:
+            self.path.unlink()
+            self.owned = False

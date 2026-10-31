@@ -125,3 +125,33 @@ The run manifest lists input logical paths, archived snapshot paths, SHA-256 dig
 - Run 1:N accepted event versions, rejected source rows, and daily balance rows.
 - Within a run, the daily balance key is date + product + location; across runs, run ID distinguishes snapshots.
 - Each run manifest 1:N archived source files and generated artifacts.
+
+
+## Correction update: 31 October 2026
+
+Clean setup: `git clone https://github.com/Yash301201/inventory-balance-pipeline.git`,
+then `cd inventory-balance-pipeline` and `python -m unittest discover -s tests -v`.
+
+Each output root is a history continuity boundary. Unrelated histories require a
+new output root. A local `.writer.lock` uses atomic exclusive file creation before
+prior-history access and remains held through pointer publication and cleanup.
+Overlapping writers fail fast; different roots are independent. Normal exceptions
+release the lock. After a crash, confirm no writer is running before manually
+removing a stale lock. Supported storage is a local filesystem with atomic exclusive
+creation; distributed writers/storage are outside this contract.
+
+`artifact_state=prepared` and legacy `publication_status=prepared` describe immutable
+pre-commit artifacts. `latest_success.json` is the publication commit record: its
+referenced run is active; other prepared runs are inactive (possibly previously
+active). Failed attempts have `status=failed` and `publication_status=not_published`.
+Activated artifacts are never rewritten.
+
+Successful summary `finished_at` and `elapsed_ms` end after persisted CSV verification;
+they exclude summary/manifest writes, hashing, directory promotion and pointer commit.
+`timing_scope` states this explicitly. Pointer `published_at` records activation, not
+full process duration. Failure timing ends at failure detection. Generation is excluded.
+
+Before hashing/activation, CSV headers, row counts, run IDs and exact serialized
+content are checked; daily readback also undergoes granular reconciliation.
+Numeric readback accepts signed ASCII integer strings `[+-]?[0-9]+`, integers and
+finite integral floats/Decimals. Boolean, fractional, non-finite and malformed values fail.

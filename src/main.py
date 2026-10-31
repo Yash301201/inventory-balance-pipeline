@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from publish import (
+    OutputLock,
     archive_inputs,
     artifact_index,
     publish_latest_success,
@@ -104,6 +105,35 @@ def _serialize_events(run_id: str, events: list[dict]) -> list[dict]:
     ]
 
 
+def verify_persisted_artifacts(stage_dir, run_id, events, rejected, daily_rows, active_events, input_rows):
+    """Read serialized content independently before hashing and activation."""
+    specs = [
+        ("daily_balances.csv", DAILY_FIELDS, daily_rows),
+        ("accepted_events.csv", ACCEPTED_FIELDS, _serialize_events(run_id, events)),
+        ("rejected_records.csv", REJECT_FIELDS, _serialize_rejects(run_id, rejected)),
+    ]
+    persisted_daily = []
+    for name, fields, expected in specs:
+        with (stage_dir / name).open(newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle, strict=True)
+            if reader.fieldnames != fields:
+                raise RuntimeError(f"persisted artifact header mismatch: {name}")
+            count = 0
+            for count, row in enumerate(reader, 1):
+                if count > len(expected) or row != {field: str(expected[count - 1][field]) for field in fields}:
+                    raise RuntimeError(f"persisted artifact content mismatch: {name} row {count}")
+                if row["run_id"] != run_id:
+                    raise RuntimeError(f"persisted artifact run ID mismatch: {name}")
+                if name == "daily_balances.csv":
+                    persisted_daily.append(row)
+            if count != len(expected):
+                raise RuntimeError(f"persisted artifact count mismatch: {name}")
+    result = reconcile(active_events, persisted_daily, input_rows=input_rows,
+                       accepted_rows=len(events), rejected_rows=len(rejected))
+    if not result["passed"]:
+        raise RuntimeError("persisted daily reconciliation failed: " + "; ".join(result["errors"]))
+
+
 def _update_summary_counts(summary: dict, counts: dict) -> None:
     summary["input_rows"] = counts.get("input_rows", 0)
     summary["accepted_rows"] = counts.get("accepted_rows", 0)
@@ -163,7 +193,10 @@ def run_pipeline(
         "error": None,
     }
 
+    writer_lock = OutputLock(output_dir)
     try:
+        current_stage = "acquire_writer_lock"
+        writer_lock.acquire()
         output_dir.mkdir(parents=True, exist_ok=True)
         runs_dir.mkdir(parents=True, exist_ok=True)
         stage_dir.mkdir(parents=False, exist_ok=False)
@@ -247,6 +280,10 @@ def run_pipeline(
         counts["prepared_balance_rows"] = len(daily_rows)
         _update_summary_counts(summary, counts)
 
+        current_stage = "verify_persisted_artifacts"
+        verify_persisted_artifacts(stage_dir, run_id, events, rejected, daily_rows, active_events, input_rows)
+        summary["artifact_state"] = "prepared"
+        summary["timing_scope"] = "start through persisted artifact verification; excludes summary, manifest, hashing, promotion and pointer commit"
         summary.update(
             {
                 "status": "success_with_rejects" if rejected else "success",
@@ -270,6 +307,7 @@ def run_pipeline(
             "input_mode": "complete_historical_snapshot",
             "run_status": summary["status"],
             "publication_status": "prepared",
+            "artifact_state": "prepared",
             "counts": {
                 "input_rows": input_rows,
                 "accepted_event_versions": len(events),
@@ -392,6 +430,8 @@ def run_pipeline(
                 file=sys.stderr,
             )
         return 1
+    finally:
+        writer_lock.release()
 
 
 def main() -> int:

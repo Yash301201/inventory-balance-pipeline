@@ -123,3 +123,33 @@ The algorithm sorts event versions and then emits a dense date/product/location 
 Performance figures are environment-specific. The current Windows 11 / Python 3.13.15 run processed 100,000 events in 9,020.83 ms and produced 1,460 daily rows. An earlier project run recorded about 791 ms with incomplete environment metadata; the independent review measured 723.65 ms with Python 3.12.14 on Linux. These different observations are not directly comparable. Run the command above on your machine and use that run's `elapsed_ms`, `python_version`, and `platform` fields. Data generation time is not included in pipeline elapsed time.
 
 See [`docs/data_dictionary.md`](docs/data_dictionary.md), [`docs/design.md`](docs/design.md), and [`docs/validation_report.md`](docs/validation_report.md) for the full field contract, design choices, and recorded verification results.
+
+
+## Correction update: 31 October 2026
+
+Clean setup: `git clone https://github.com/Yash301201/inventory-balance-pipeline.git`,
+then `cd inventory-balance-pipeline` and `python -m unittest discover -s tests -v`.
+
+Each output root is a history continuity boundary. Unrelated histories require a
+new output root. A local `.writer.lock` uses atomic exclusive file creation before
+prior-history access and remains held through pointer publication and cleanup.
+Overlapping writers fail fast; different roots are independent. Normal exceptions
+release the lock. After a crash, confirm no writer is running before manually
+removing a stale lock. Supported storage is a local filesystem with atomic exclusive
+creation; distributed writers/storage are outside this contract.
+
+`artifact_state=prepared` and legacy `publication_status=prepared` describe immutable
+pre-commit artifacts. `latest_success.json` is the publication commit record: its
+referenced run is active; other prepared runs are inactive (possibly previously
+active). Failed attempts have `status=failed` and `publication_status=not_published`.
+Activated artifacts are never rewritten.
+
+Successful summary `finished_at` and `elapsed_ms` end after persisted CSV verification;
+they exclude summary/manifest writes, hashing, directory promotion and pointer commit.
+`timing_scope` states this explicitly. Pointer `published_at` records activation, not
+full process duration. Failure timing ends at failure detection. Generation is excluded.
+
+Before hashing/activation, CSV headers, row counts, run IDs and exact serialized
+content are checked; daily readback also undergoes granular reconciliation.
+Numeric readback accepts signed ASCII integer strings `[+-]?[0-9]+`, integers and
+finite integral floats/Decimals. Boolean, fractional, non-finite and malformed values fail.

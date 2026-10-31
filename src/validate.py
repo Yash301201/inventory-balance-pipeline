@@ -311,7 +311,7 @@ def _resolve_versions(events: list[dict], rejected: list[dict]) -> list[dict]:
             if not parent_id:
                 continue
             parent = by_id[parent_id]
-            if parent["recorded_at"] and event["recorded_at"] <= parent["recorded_at"]:
+            if parent["recorded_at"] and datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")) <= datetime.fromisoformat(parent["recorded_at"].replace("Z", "+00:00")):
                 bad_timestamp_ids.add(event["event_id"])
         if bad_timestamp_ids:
             remove_ids(

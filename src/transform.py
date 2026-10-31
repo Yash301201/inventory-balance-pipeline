@@ -1,5 +1,7 @@
 """Movement aggregation, daily balance calculation, and independent reconciliation."""
 
+import re
+from decimal import Decimal
 from collections import defaultdict
 from datetime import date, timedelta
 
@@ -143,6 +145,26 @@ def compute_daily_balances(
     return output
 
 
+def exact_integer(value):
+    """Accept integers, integral finite floats/Decimals, and signed ASCII integer strings."""
+    if isinstance(value, bool):
+        raise ValueError("boolean is not an inventory integer")
+    if isinstance(value, str):
+        if not re.fullmatch(r"[+-]?[0-9]+", value):
+            raise ValueError("invalid integer syntax")
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, (float, Decimal)):
+        try:
+            result = int(value)
+        except (ValueError, OverflowError):
+            raise ValueError("non-finite integer") from None
+        if value == result:
+            return result
+    raise ValueError("non-integral inventory value")
+
+
 def reconcile(
     events: list[dict],
     daily_rows: list[dict],
@@ -260,10 +282,10 @@ def reconcile(
             },
         )
         try:
-            actual_fields = {field: int(row[field]) for field in MOVEMENT_FIELDS}
-            opening = int(row["opening_quantity"])
-            closing = int(row["closing_quantity"])
-            net_change = int(row["net_change"])
+            actual_fields = {field: exact_integer(row[field]) for field in MOVEMENT_FIELDS}
+            opening = exact_integer(row["opening_quantity"])
+            closing = exact_integer(row["closing_quantity"])
+            net_change = exact_integer(row["net_change"])
         except (KeyError, TypeError, ValueError):
             movement_passed = False
             continuity_passed = False
@@ -299,8 +321,8 @@ def reconcile(
     for row in daily_rows:
         try:
             transfer_key = (str(row["balance_date"]), str(row["product_id"]))
-            actual_transfer_by_product_day[transfer_key]["transfers_in"] += int(row["transfers_in"])
-            actual_transfer_by_product_day[transfer_key]["transfers_out"] += int(row["transfers_out"])
+            actual_transfer_by_product_day[transfer_key]["transfers_in"] += exact_integer(row["transfers_in"])
+            actual_transfer_by_product_day[transfer_key]["transfers_out"] += exact_integer(row["transfers_out"])
         except (KeyError, TypeError, ValueError):
             continue
     transfer_keys = set(transfer_by_product_day) | {
